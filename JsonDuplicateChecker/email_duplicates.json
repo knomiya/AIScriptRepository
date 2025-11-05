@@ -1,0 +1,35 @@
+{
+  "field_name": "email",
+  "duplicate_count": 2,
+  "total_duplicate_records": 4,
+  "duplicates": {
+    "zhangsan@example.com": [
+      {
+        "id": "001",
+        "name": "张三",
+        "email": "zhangsan@example.com",
+        "age": 25
+      },
+      {
+        "id": "003",
+        "name": "王五",
+        "email": "zhangsan@example.com",
+        "age": 28
+      }
+    ],
+    "lisi@example.com": [
+      {
+        "id": "002",
+        "name": "李四",
+        "email": "lisi@example.com",
+        "age": 30
+      },
+      {
+        "id": "005",
+        "name": "钱七",
+        "email": "lisi@example.com",
+        "age": 32
+      }
+    ]
+  }
+}
