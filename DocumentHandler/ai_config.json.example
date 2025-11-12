@@ -1,0 +1,52 @@
+{
+  "providers": {
+    "deepseek": {
+      "api_key": "your_deepseek_api_key_here",
+      "model": "deepseek-chat",
+      "temperature": 0.3,
+      "max_tokens": 2000
+    },
+    "kimi": {
+      "api_key": "your_kimi_api_key_here",
+      "model": "moonshot-v1-8k",
+      "temperature": 0.3,
+      "max_tokens": 2000
+    },
+    "zhipu": {
+      "api_key": "your_zhipu_api_key_here",
+      "model": "glm-4",
+      "temperature": 0.3,
+      "max_tokens": 2000
+    },
+    "doubao": {
+      "api_key": "your_doubao_api_key_here",
+      "model": "doubao-pro-4k",
+      "temperature": 0.3,
+      "max_tokens": 2000
+    },
+    "openai": {
+      "api_key": "your_openai_api_key_here",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.3,
+      "max_tokens": 2000
+    },
+    "claude": {
+      "api_key": "your_claude_api_key_here", 
+      "model": "claude-3-sonnet-20240229",
+      "max_tokens": 2000
+    },
+    "local": {
+      "base_url": "http://localhost:11434",
+      "model": "llama2",
+      "timeout": 30
+    }
+  },
+  "priority": ["deepseek", "kimi", "zhipu", "doubao", "openai", "claude", "local", "rule_based"],
+  "retry_on_failure": true,
+  "default_provider": "deepseek",
+  "settings": {
+    "max_retries": 3,
+    "timeout": 30,
+    "enable_logging": true
+  }
+}

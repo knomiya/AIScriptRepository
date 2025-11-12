@@ -1,0 +1,120 @@
+{
+  "provider_strategy": {
+    "mode": "priority_with_fallback",
+    "enabled_providers": ["deepseek", "kimi", "rule_based"],
+    "primary_provider": "deepseek",
+    "fallback_chain": ["kimi", "rule_based"],
+    "retry_on_failure": true,
+    "max_retries": 2,
+    "timeout_seconds": 30
+  },
+  "providers": {
+    "deepseek": {
+      "enabled": true,
+      "api_key": "your_deepseek_api_key_here",
+      "model": "deepseek-chat",
+      "temperature": 0.3,
+      "max_tokens": 2000,
+      "priority": 1,
+      "retry_count": 2,
+      "timeout": 30
+    },
+    "kimi": {
+      "enabled": true,
+      "api_key": "your_kimi_api_key_here",
+      "model": "moonshot-v1-8k",
+      "temperature": 0.3,
+      "max_tokens": 2000,
+      "priority": 2,
+      "retry_count": 1,
+      "timeout": 25
+    },
+    "zhipu": {
+      "enabled": false,
+      "api_key": "your_zhipu_api_key_here",
+      "model": "glm-4",
+      "temperature": 0.3,
+      "max_tokens": 2000,
+      "priority": 3,
+      "retry_count": 1,
+      "timeout": 20
+    },
+    "doubao": {
+      "enabled": false,
+      "api_key": "your_doubao_api_key_here",
+      "model": "doubao-pro-4k",
+      "temperature": 0.3,
+      "max_tokens": 2000,
+      "priority": 4,
+      "retry_count": 1,
+      "timeout": 20
+    },
+    "openai": {
+      "enabled": false,
+      "api_key": "your_openai_api_key_here",
+      "model": "gpt-3.5-turbo",
+      "temperature": 0.3,
+      "max_tokens": 2000,
+      "priority": 5,
+      "retry_count": 1,
+      "timeout": 30
+    },
+    "claude": {
+      "enabled": false,
+      "api_key": "your_claude_api_key_here",
+      "model": "claude-3-sonnet-20240229",
+      "max_tokens": 2000,
+      "priority": 6,
+      "retry_count": 1,
+      "timeout": 30
+    },
+    "local": {
+      "enabled": false,
+      "base_url": "http://localhost:11434",
+      "model": "llama2",
+      "timeout": 60,
+      "priority": 7,
+      "retry_count": 1
+    },
+    "rule_based": {
+      "enabled": true,
+      "rule_config_path": null,
+      "priority": 99,
+      "retry_count": 1,
+      "timeout": 5
+    }
+  },
+  "scenarios": {
+    "excel_processing": {
+      "preferred_providers": ["deepseek", "kimi"],
+      "fallback_providers": ["rule_based"],
+      "special_config": {
+        "temperature": 0.2,
+        "max_tokens": 1500
+      }
+    },
+    "word_processing": {
+      "preferred_providers": ["kimi", "deepseek"],
+      "fallback_providers": ["rule_based"],
+      "special_config": {
+        "temperature": 0.3,
+        "max_tokens": 2000
+      }
+    },
+    "complex_analysis": {
+      "preferred_providers": ["deepseek"],
+      "fallback_providers": ["kimi", "rule_based"],
+      "special_config": {
+        "temperature": 0.1,
+        "max_tokens": 3000
+      }
+    }
+  },
+  "global_settings": {
+    "log_level": "INFO",
+    "enable_caching": true,
+    "cache_ttl_seconds": 300,
+    "enable_metrics": true,
+    "health_check_interval": 60
+  }
+}

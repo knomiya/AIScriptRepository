@@ -1,0 +1,229 @@
+{
+  "excel_examples": [
+    {
+      "user_input": "计算销售数据的平均值和总和",
+      "expected_output": {
+        "user_requirement": "计算销售数据的平均值和总和",
+        "file_type": "excel",
+        "operations": [
+          {
+            "type": "calculate",
+            "action": "数据统计分析",
+            "description": "对销售数据进行统计计算，包括平均值和总和",
+            "parameters": {
+              "include_sum": true,
+              "include_avg": true,
+              "target_columns": "auto_detect"
+            }
+          }
+        ],
+        "confidence": 0.9,
+        "suggestions": ["建议指定具体的列名以获得更精确的结果"]
+      }
+    },
+    {
+      "user_input": "筛选出年龄大于30岁且薪资超过8000的员工",
+      "expected_output": {
+        "user_requirement": "筛选出年龄大于30岁且薪资超过8000的员工",
+        "file_type": "excel",
+        "operations": [
+          {
+            "type": "filter",
+            "action": "数据筛选",
+            "description": "根据年龄和薪资条件筛选员工数据",
+            "parameters": {
+              "conditions": [
+                {"column": "年龄", "operator": ">", "value": 30},
+                {"column": "薪资", "operator": ">", "value": 8000}
+              ],
+              "logical_operator": "AND"
+            }
+          }
+        ],
+        "confidence": 0.95,
+        "suggestions": ["筛选完成后可以考虑按薪资排序查看结果"]
+      }
+    },
+    {
+      "user_input": "按销售额从高到低排序，并生成柱状图",
+      "expected_output": {
+        "user_requirement": "按销售额从高到低排序，并生成柱状图",
+        "file_type": "excel",
+        "operations": [
+          {
+            "type": "sort",
+            "action": "数据排序",
+            "description": "按销售额降序排序",
+            "parameters": {
+              "sort_column": "销售额",
+              "order": "desc"
+            }
+          },
+          {
+            "type": "visualize",
+            "action": "数据可视化",
+            "description": "生成销售额柱状图",
+            "parameters": {
+              "chart_type": "bar",
+              "x_axis": "auto_detect",
+              "y_axis": "销售额"
+            }
+          }
+        ],
+        "confidence": 0.9,
+        "suggestions": ["可以限制显示前10名以提高图表可读性"]
+      }
+    }
+  ],
+  "word_examples": [
+    {
+      "user_input": "将所有标题设置为黑体，正文设置为宋体12号",
+      "expected_output": {
+        "user_requirement": "将所有标题设置为黑体，正文设置为宋体12号",
+        "file_type": "word",
+        "operations": [
+          {
+            "type": "format",
+            "action": "格式调整",
+            "description": "调整文档字体格式",
+            "parameters": {
+              "heading_font": {
+                "name": "黑体",
+                "bold": true
+              },
+              "body_font": {
+                "name": "宋体",
+                "size": 12
+              }
+            }
+          }
+        ],
+        "confidence": 0.95,
+        "suggestions": ["建议同时调整行距以提高可读性"]
+      }
+    },
+    {
+      "user_input": "将文档中所有的'甲方'替换为'ABC公司'",
+      "expected_output": {
+        "user_requirement": "将文档中所有的'甲方'替换为'ABC公司'",
+        "file_type": "word",
+        "operations": [
+          {
+            "type": "replace",
+            "action": "内容替换",
+            "description": "批量替换文档中的文本内容",
+            "parameters": {
+              "find_text": "甲方",
+              "replace_text": "ABC公司",
+              "match_case": false,
+              "whole_word": true
+            }
+          }
+        ],
+        "confidence": 0.9,
+        "suggestions": ["替换完成后建议检查上下文是否合适"]
+      }
+    },
+    {
+      "user_input": "分析文档结构并生成目录",
+      "expected_output": {
+        "user_requirement": "分析文档结构并生成目录",
+        "file_type": "word",
+        "operations": [
+          {
+            "type": "analyze",
+            "action": "结构分析",
+            "description": "分析文档标题结构",
+            "parameters": {
+              "analyze_headings": true,
+              "heading_levels": [1, 2, 3]
+            }
+          },
+          {
+            "type": "generate_toc",
+            "action": "生成目录",
+            "description": "基于标题结构生成目录",
+            "parameters": {
+              "toc_style": "auto",
+              "include_page_numbers": true
+            }
+          }
+        ],
+        "confidence": 0.85,
+        "suggestions": ["确保文档标题使用了正确的样式以便生成准确的目录"]
+      }
+    }
+  ],
+  "complex_examples": [
+    {
+      "user_input": "分析这个销售报表，计算每个地区的销售总额和平均值，筛选出销售额前10的地区，然后生成对比图表",
+      "expected_output": {
+        "user_requirement": "分析这个销售报表，计算每个地区的销售总额和平均值，筛选出销售额前10的地区，然后生成对比图表",
+        "file_type": "excel",
+        "operations": [
+          {
+            "type": "analyze",
+            "action": "数据分析",
+            "description": "分析销售报表数据结构",
+            "parameters": {
+              "group_by": "地区"
+            }
+          },
+          {
+            "type": "calculate",
+            "action": "数据统计分析",
+            "description": "计算各地区销售统计数据",
+            "parameters": {
+              "group_by": "地区",
+              "include_sum": true,
+              "include_avg": true,
+              "target_column": "销售额"
+            }
+          },
+          {
+            "type": "sort",
+            "action": "数据排序",
+            "description": "按销售额排序",
+            "parameters": {
+              "sort_column": "销售额",
+              "order": "desc"
+            }
+          },
+          {
+            "type": "filter",
+            "action": "数据筛选",
+            "description": "筛选前10名地区",
+            "parameters": {
+              "method": "top_n",
+              "n": 10,
+              "sort_column": "销售额"
+            }
+          },
+          {
+            "type": "visualize",
+            "action": "数据可视化",
+            "description": "生成地区销售对比图表",
+            "parameters": {
+              "chart_type": "bar",
+              "x_axis": "地区",
+              "y_axis": "销售额",
+              "title": "各地区销售额对比（前10名）"
+            }
+          }
+        ],
+        "confidence": 0.9,
+        "suggestions": [
+          "建议先预览数据结构确认地区和销售额列名",
+          "可以考虑同时生成销售趋势图",
+          "建议保存处理后的数据到新工作表"
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2024-01-01",
+    "total_examples": 7,
+    "categories": ["excel_examples", "word_examples", "complex_examples"]
+  }
+}

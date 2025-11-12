@@ -1,0 +1,134 @@
+{
+  "excel_rules": {
+    "calculate": {
+      "keywords": ["统计", "计算", "求和", "平均", "总计", "汇总", "最大", "最小", "标准差", "方差"],
+      "patterns": [
+        "计算.*平均",
+        "求.*总和",
+        "统计.*数据",
+        ".*的平均值",
+        ".*总额"
+      ],
+      "confidence_boost": 0.2,
+      "parameters": {
+        "include_sum": ["求和", "总计", "总额", "合计"],
+        "include_avg": ["平均", "均值", "平均数"],
+        "include_max_min": ["最大", "最小", "极值"],
+        "include_std": ["标准差", "方差", "离散"]
+      }
+    },
+    "filter": {
+      "keywords": ["筛选", "过滤", "查找", "搜索", "条件", "符合", "满足", "选择"],
+      "patterns": [
+        "筛选.*条件",
+        "查找.*符合",
+        ".*大于.*",
+        ".*小于.*",
+        ".*等于.*",
+        ".*包含.*"
+      ],
+      "confidence_boost": 0.15,
+      "parameters": {
+        "comparison_operators": ["大于", "小于", "等于", "不等于", "包含", "不包含"],
+        "logical_operators": ["并且", "或者", "同时", "或"]
+      }
+    },
+    "sort": {
+      "keywords": ["排序", "排列", "从大到小", "从小到大", "升序", "降序", "按.*排序"],
+      "patterns": [
+        "按.*排序",
+        ".*从大到小",
+        ".*从小到大",
+        "升序.*",
+        "降序.*"
+      ],
+      "confidence_boost": 0.25,
+      "parameters": {
+        "desc_keywords": ["从大到小", "降序", "倒序", "递减"],
+        "asc_keywords": ["从小到大", "升序", "正序", "递增"]
+      }
+    },
+    "visualize": {
+      "keywords": ["图表", "柱状图", "折线图", "饼图", "可视化", "绘制", "画图"],
+      "patterns": [
+        "生成.*图",
+        "绘制.*图表",
+        "可视化.*",
+        ".*图表"
+      ],
+      "confidence_boost": 0.1,
+      "parameters": {
+        "chart_types": {
+          "bar": ["柱状图", "条形图", "柱图"],
+          "line": ["折线图", "线图", "趋势图"],
+          "pie": ["饼图", "圆饼图"],
+          "scatter": ["散点图", "点图"]
+        }
+      }
+    }
+  },
+  "word_rules": {
+    "format": {
+      "keywords": ["格式", "样式", "字体", "字号", "颜色", "对齐", "缩进", "行距", "段落"],
+      "patterns": [
+        "调整.*格式",
+        "设置.*字体",
+        ".*样式",
+        "格式化.*",
+        "统一.*格式"
+      ],
+      "confidence_boost": 0.2,
+      "parameters": {
+        "font_properties": ["字体", "字号", "颜色", "粗体", "斜体", "下划线"],
+        "paragraph_properties": ["对齐", "缩进", "行距", "段间距"],
+        "alignment_types": ["左对齐", "右对齐", "居中", "两端对齐"]
+      }
+    },
+    "replace": {
+      "keywords": ["替换", "修改", "更改", "更新", "改为", "换成"],
+      "patterns": [
+        "替换.*为.*",
+        "将.*改为.*",
+        "把.*换成.*",
+        "修改.*为.*"
+      ],
+      "confidence_boost": 0.3,
+      "parameters": {
+        "replace_types": ["文本替换", "格式替换", "样式替换"]
+      }
+    },
+    "analyze": {
+      "keywords": ["分析", "结构", "目录", "章节", "标题", "段落", "统计", "字数"],
+      "patterns": [
+        "分析.*结构",
+        "生成.*目录",
+        "统计.*字数",
+        ".*结构分析"
+      ],
+      "confidence_boost": 0.15,
+      "parameters": {
+        "analysis_types": ["结构分析", "内容统计", "格式分析", "目录生成"]
+      }
+    },
+    "proofread": {
+      "keywords": ["校对", "检查", "错误", "语法", "拼写", "纠错"],
+      "patterns": [
+        "检查.*错误",
+        "校对.*",
+        "纠正.*",
+        ".*语法检查"
+      ],
+      "confidence_boost": 0.1,
+      "parameters": {
+        "check_types": ["拼写检查", "语法检查", "格式检查", "逻辑检查"]
+      }
+    }
+  },
+  "global_settings": {
+    "min_confidence": 0.3,
+    "max_operations": 5,
+    "enable_fuzzy_matching": true,
+    "case_sensitive": false,
+    "enable_regex": true
+  }
+}
