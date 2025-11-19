@@ -409,16 +409,55 @@ class GitAnalyzer:
         
         # 日期统计
         daily_commits = Counter()
+        monthly_commits = Counter()
+        weekly_commits = Counter()
+        
+        # 提交规模统计
+        commit_file_counts = []  # 每次提交修改的文件数
+        large_commits = []  # 大型提交（修改文件数 > 10）
+        
+        # 时间段统计
+        hour_commits = Counter()
+        weekday_commits = Counter()
         
         for commit in commits:
             author = commit['author_name']
             author_commits[author] += 1
             
-            # 日期统计
+            # 日期和时间统计
             date_str = commit['date'][:10]  # 取日期部分
             daily_commits[date_str] += 1
             
+            # 月份统计
+            month_str = commit['date'][:7]  # YYYY-MM
+            monthly_commits[month_str] += 1
+            
+            # 解析日期获取星期几
+            try:
+                from datetime import datetime
+                commit_datetime = datetime.fromisoformat(commit['date'].replace('Z', '+00:00'))
+                weekday = commit_datetime.strftime('%A')  # 星期几
+                weekday_commits[weekday] += 1
+                
+                hour = commit_datetime.hour
+                hour_commits[hour] += 1
+            except:
+                pass
+            
             # 文件统计
+            file_count = len(commit['files'])
+            commit_file_counts.append(file_count)
+            
+            # 大型提交统计
+            if file_count > 10:
+                large_commits.append({
+                    'hash': commit['hash'][:8],
+                    'message': commit['message'],
+                    'date': commit['date'][:19],
+                    'file_count': file_count,
+                    'files': commit['files']
+                })
+            
             for file_path in commit['files']:
                 file_changes[file_path] += 1
                 author_files[author].add(file_path)
@@ -427,6 +466,26 @@ class GitAnalyzer:
                 if '.' in file_path:
                     ext = '.' + file_path.split('.')[-1].lower()
                     file_extensions[ext] += 1
+        
+        # 计算提交规模统计
+        avg_files_per_commit = sum(commit_file_counts) / len(commit_file_counts) if commit_file_counts else 0
+        max_files_commit = max(commit_file_counts) if commit_file_counts else 0
+        
+        # 找出修改文件最多的提交记录（前10）
+        commits_by_file_count = sorted(commits, key=lambda x: len(x['files']), reverse=True)[:10]
+        top_commits_by_files = []
+        for commit in commits_by_file_count:
+            top_commits_by_files.append({
+                'hash': commit['hash'][:8],
+                'message': commit['message'][:100] + ('...' if len(commit['message']) > 100 else ''),
+                'date': commit['date'][:19],
+                'file_count': len(commit['files']),
+                'author': commit['author_name']
+            })
+        
+        # 活跃度分析
+        active_days = len(daily_commits)
+        total_days = (max(daily_commits.keys()) if daily_commits else datetime.now().strftime('%Y-%m-%d')) 
         
         return {
             'project_name': project_name,
@@ -437,5 +496,17 @@ class GitAnalyzer:
             'file_changes': dict(file_changes.most_common(20)),  # 前20个最常修改的文件
             'file_extensions': dict(file_extensions.most_common()),
             'daily_commits': dict(daily_commits),
-            'author_files': {author: len(files) for author, files in author_files.items()}
+            'monthly_commits': dict(monthly_commits),
+            'weekday_commits': dict(weekday_commits),
+            'hour_commits': dict(hour_commits),
+            'author_files': {author: len(files) for author, files in author_files.items()},
+            # 新增的个人开发统计
+            'commit_stats': {
+                'avg_files_per_commit': round(avg_files_per_commit, 2),
+                'max_files_per_commit': max_files_commit,
+                'total_files_modified': len(file_changes),
+                'active_days': active_days
+            },
+            'top_commits_by_files': top_commits_by_files,
+            'large_commits': large_commits[:10]  # 只保留前10个大型提交
         }
