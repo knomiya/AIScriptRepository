@@ -26,11 +26,14 @@ pip install -r requirements.txt
 # 基本用法（必须指定作者、分支、扫描目录）
 python main.py --author "你的邮箱" --branch main --scan-dir ~/projects
 
+# 多个作者邮箱（用逗号分隔）
+python main.py --author "email1@example.com,email2@example.com,张三" --branch main --scan-dir ~/projects
+
 # 分析指定时间范围
 python main.py --author "your-email@example.com" --branch develop --scan-dir ~/work --since 2024-01-01 --until 2024-01-31
 
 # 分析最近7天
-python main.py --author "张三" --branch main --scan-dir . --days 7
+python main.py --author "张三,李四" --branch main --scan-dir . --days 7
 
 # 指定输出目录
 python main.py --author "你的邮箱" --branch main --scan-dir ~/projects --output ./reports
@@ -39,7 +42,7 @@ python main.py --author "你的邮箱" --branch main --scan-dir ~/projects --out
 ## 命令行参数
 
 ### 必填参数
-- `--author`: 指定要分析的作者姓名或邮箱（必填）
+- `--author`: 指定要分析的作者姓名或邮箱，多个用逗号分隔（必填）
 - `--branch`: 指定要分析的分支名称（必填）
 - `--scan-dir`: 扫描指定目录下的所有Git项目（必填）
 
@@ -120,6 +123,9 @@ pip install -r requirements.txt
 ```bash
 # 分析当前目录下所有Git项目的main分支，最近30天的提交
 python main.py --author "你的邮箱" --branch main --scan-dir .
+
+# 多个作者分析
+python main.py --author "email1@example.com,email2@example.com" --branch main --scan-dir .
 
 # 分析指定目录和时间范围
 python main.py --author "your-email@example.com" --branch develop --scan-dir ~/work --since 2024-01-01 --until 2024-01-31

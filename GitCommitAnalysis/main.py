@@ -21,19 +21,22 @@ def main():
     parser.add_argument('--since', help='开始时间 (YYYY-MM-DD)')
     parser.add_argument('--until', help='结束时间 (YYYY-MM-DD)')
     parser.add_argument('--days', type=int, default=30, help='分析最近N天的提交，当未指定since/until时使用 (默认30天)')
-    parser.add_argument('--author', required=True, help='指定要分析的作者姓名或邮箱（必填）')
+    parser.add_argument('--author', required=True, help='指定要分析的作者姓名或邮箱，多个用逗号分隔（必填）')
     parser.add_argument('--scan-dir', required=True, help='扫描指定目录下的所有Git项目进行分析（必填）')
     parser.add_argument('--branch', required=True, help='指定要分析的分支名称（必填）')
     
     args = parser.parse_args()
     
+    # 解析多个作者（用逗号分隔）
+    authors = [author.strip() for author in args.author.split(',') if author.strip()]
+    
     # 设置作者过滤
     author_filter = {
         'enabled': True,
-        'author_names': [args.author],
-        'author_emails': [args.author]
+        'author_names': authors,
+        'author_emails': authors
     }
-    print(f"分析作者: {args.author}")
+    print(f"分析作者: {', '.join(authors)}")
     print(f"分析分支: {args.branch}")
     print(f"扫描目录: {args.scan_dir}")
     

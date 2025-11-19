@@ -11,6 +11,48 @@ from collections import defaultdict, Counter
 import subprocess
 import re
 
+def run_git_command(cmd, cwd, description=""):
+    """运行Git命令并打印日志"""
+    cmd_str = ' '.join(cmd)
+    print(f"  🔧 执行命令: {cmd_str}")
+    if description:
+        print(f"     目的: {description}")
+    
+    try:
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                              encoding='utf-8', errors='ignore')
+        
+        if result.returncode == 0:
+            output_lines = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
+            print(f"     ✅ 成功，输出 {output_lines} 行")
+        elif result.returncode == 128 and 'dubious ownership' in result.stderr:
+            print(f"     ⚠️  检测到所有权问题，尝试自动修复...")
+            # 自动添加到安全目录
+            safe_cmd = ['git', 'config', '--global', '--add', 'safe.directory', cwd]
+            safe_result = subprocess.run(safe_cmd, capture_output=True, text=True,
+                                       encoding='utf-8', errors='ignore')
+            if safe_result.returncode == 0:
+                print(f"     🔧 已添加到安全目录，重新执行命令...")
+                # 重新执行原命令
+                result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                                      encoding='utf-8', errors='ignore')
+                if result.returncode == 0:
+                    output_lines = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
+                    print(f"     ✅ 修复后成功，输出 {output_lines} 行")
+                else:
+                    print(f"     ❌ 修复后仍失败，返回码: {result.returncode}")
+            else:
+                print(f"     ❌ 无法自动修复所有权问题")
+        else:
+            print(f"     ❌ 失败，返回码: {result.returncode}")
+            if result.stderr:
+                print(f"     错误: {result.stderr.strip()[:100]}")
+        
+        return result
+    except Exception as e:
+        print(f"     ❌ 异常: {str(e)}")
+        return None
+
 class GitAnalyzer:
     def __init__(self):
         self.clone_dir = "./repos"
@@ -70,24 +112,21 @@ class GitAnalyzer:
         # 检查是否已存在本地仓库
         if os.path.exists(local_path) and os.path.exists(os.path.join(local_path, '.git')):
             print(f"  更新本地仓库: {local_path}")
-            try:
-                # 更新仓库
-                subprocess.run(['git', 'fetch', '--all'], cwd=local_path, check=True, 
-                             capture_output=True, text=True)
+            result = run_git_command(['git', 'fetch', '--all'], local_path, "获取远程更新")
+            if result and result.returncode == 0:
                 return local_path
-            except subprocess.CalledProcessError as e:
-                print(f"  仓库更新失败: {e}")
-                # 删除并重新克隆
+            else:
+                print(f"  仓库更新失败，删除并重新克隆")
                 shutil.rmtree(local_path)
         
         # 克隆仓库
         print(f"  克隆仓库: {project['url']}")
-        try:
-            cmd = ['git', 'clone', project['url'], local_path]
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = run_git_command(['git', 'clone', project['url'], local_path], 
+                                os.path.dirname(local_path), "克隆远程仓库")
+        if result and result.returncode == 0:
             return local_path
-        except subprocess.CalledProcessError as e:
-            print(f"  克隆失败: {e}")
+        else:
+            print(f"  克隆失败")
             return None
     
     def _get_commits(self, repo_path: str, since_date: datetime, 
@@ -95,24 +134,22 @@ class GitAnalyzer:
         """获取提交记录"""
         try:
             # 获取所有分支
-            branches_result = subprocess.run(['git', 'branch', '-a'], cwd=repo_path, 
-                                           capture_output=True, text=True, encoding='utf-8', errors='ignore')
+            branches_result = run_git_command(['git', 'branch', '-a'], repo_path, "获取所有分支")
             
             # 尝试切换到指定分支，如果失败则使用当前分支
             current_branch = self._get_current_branch(repo_path)
             target_branch = branch
             
-            if branches_result.returncode == 0:
+            if branches_result and branches_result.returncode == 0:
                 branches = branches_result.stdout
                 # 检查分支是否存在
                 if f'origin/{branch}' in branches and f'* {branch}' not in branches:
                     # 远程分支存在但本地不存在，创建并切换
-                    subprocess.run(['git', 'checkout', '-b', branch, f'origin/{branch}'], 
-                                 cwd=repo_path, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+                    run_git_command(['git', 'checkout', '-b', branch, f'origin/{branch}'], 
+                                  repo_path, f"创建并切换到分支 {branch}")
                 elif branch in branches.replace('*', '').replace(' ', ''):
                     # 分支存在，直接切换
-                    subprocess.run(['git', 'checkout', branch], cwd=repo_path, 
-                                 capture_output=True, text=True, encoding='utf-8', errors='ignore')
+                    run_git_command(['git', 'checkout', branch], repo_path, f"切换到分支 {branch}")
                 else:
                     # 分支不存在，使用当前分支
                     target_branch = current_branch or 'HEAD'
@@ -123,11 +160,9 @@ class GitAnalyzer:
             until_str = until_date.strftime('%Y-%m-%d')
             
             # 先检查是否有任何提交
-            check_cmd = ['git', 'log', '--oneline', '-1']
-            check_result = subprocess.run(check_cmd, cwd=repo_path, capture_output=True, 
-                                        text=True, encoding='utf-8', errors='ignore')
+            check_result = run_git_command(['git', 'log', '--oneline', '-1'], repo_path, "检查是否有提交记录")
             
-            if check_result.returncode != 0 or not check_result.stdout.strip():
+            if not check_result or check_result.returncode != 0 or not check_result.stdout.strip():
                 print(f"  仓库没有提交记录")
                 return []
             
@@ -141,16 +176,18 @@ class GitAnalyzer:
                 target_branch  # 只搜索指定分支
             ]
             
-            result = subprocess.run(cmd, cwd=repo_path, capture_output=True, 
-                                  text=True, encoding='utf-8', errors='ignore', check=True)
+            result = run_git_command(cmd, repo_path, f"获取 {since_str} 到 {until_str} 的提交记录")
+            
+            if not result or result.returncode != 0:
+                print(f"  获取提交记录失败")
+                return []
             
             if not result.stdout.strip():
                 print(f"  时间范围 {since_str} 到 {until_str} 内没有提交记录")
                 # 尝试获取最近的几个提交来验证
-                recent_cmd = ['git', 'log', '--oneline', '-5', target_branch]
-                recent_result = subprocess.run(recent_cmd, cwd=repo_path, capture_output=True, 
-                                             text=True, encoding='utf-8', errors='ignore')
-                if recent_result.returncode == 0 and recent_result.stdout.strip():
+                recent_result = run_git_command(['git', 'log', '--oneline', '-5', target_branch], 
+                                              repo_path, "获取最近5个提交用于验证")
+                if recent_result and recent_result.returncode == 0 and recent_result.stdout.strip():
                     print(f"  最近的提交:")
                     for line in recent_result.stdout.strip().split('\n')[:3]:
                         print(f"    {line}")
@@ -158,20 +195,16 @@ class GitAnalyzer:
             
             return self._parse_git_log(result.stdout)
             
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             print(f"  获取提交记录失败: {e}")
             # 尝试不指定时间范围获取最近提交
-            try:
-                fallback_cmd = ['git', 'log', '--oneline', '-10', target_branch]
-                fallback_result = subprocess.run(fallback_cmd, cwd=repo_path, capture_output=True, 
-                                               text=True, encoding='utf-8', errors='ignore')
-                if fallback_result.returncode == 0 and fallback_result.stdout.strip():
-                    print(f"  仓库存在提交记录，但指定时间范围内没有找到")
-                    print(f"  最近的提交:")
-                    for line in fallback_result.stdout.strip().split('\n')[:3]:
-                        print(f"    {line}")
-            except:
-                pass
+            fallback_result = run_git_command(['git', 'log', '--oneline', '-10', target_branch], 
+                                            repo_path, "获取最近10个提交作为备用")
+            if fallback_result and fallback_result.returncode == 0 and fallback_result.stdout.strip():
+                print(f"  仓库存在提交记录，但指定时间范围内没有找到")
+                print(f"  最近的提交:")
+                for line in fallback_result.stdout.strip().split('\n')[:3]:
+                    print(f"    {line}")
             return []
     
     def _filter_commits_by_author(self, commits: List[Dict[str, Any]], 
@@ -181,28 +214,50 @@ class GitAnalyzer:
         author_names = author_filter.get('author_names', [])
         author_emails = author_filter.get('author_emails', [])
         
+        print(f"  🔍 作者过滤条件: 姓名={author_names}, 邮箱={author_emails}")
+        
         # 转换为小写进行比较
         author_names_lower = [name.lower() for name in author_names]
         author_emails_lower = [email.lower() for email in author_emails]
         
+        # 收集所有作者信息用于调试
+        all_authors = set()
         filtered_commits = []
+        
         for commit in commits:
             author_name = commit['author_name'].lower()
             author_email = commit['author_email'].lower()
+            all_authors.add(f"{commit['author_name']} <{commit['author_email']}>")
             
             # 检查作者姓名或邮箱是否匹配
+            matched = False
             if (author_name in author_names_lower or 
                 author_email in author_emails_lower or
                 any(name in author_name for name in author_names_lower) or
                 any(email in author_email for email in author_emails_lower)):
                 filtered_commits.append(commit)
+                matched = True
+            
+            # 调试信息：显示前几个提交的匹配情况
+            if len(filtered_commits) + len([c for c in commits if c != commit]) <= 5:
+                match_status = "✅ 匹配" if matched else "❌ 不匹配"
+                print(f"    {match_status}: {commit['author_name']} <{commit['author_email']}> - {commit['message'][:30]}")
         
-        print(f"  过滤后的提交数: {len(filtered_commits)} / {len(commits)}")
+        print(f"  📊 仓库中的所有作者 ({len(all_authors)} 个):")
+        for author in sorted(list(all_authors)): 
+            print(f"    {author}")
+        
+        print(f"  ✅ 作者过滤结果: {len(filtered_commits)} / {len(commits)} 个提交匹配")
         return filtered_commits
     
     def _filter_meaningful_commits(self, commits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """过滤掉合并提交和无实际代码的提交"""
         meaningful_commits = []
+        merge_commits = []
+        no_files_commits = []
+        no_code_files_commits = []
+        
+        print(f"  🔍 开始过滤无意义提交...")
         
         for commit in commits:
             message = commit['message'].lower().strip()
@@ -212,10 +267,14 @@ class GitAnalyzer:
                 'merge branch' in message or 
                 'merge pull request' in message or
                 'merge remote-tracking branch' in message):
+                merge_commits.append(commit)
+                print(f"    🔀 跳过合并提交: {commit['message'][:50]}")
                 continue
             
             # 跳过没有文件修改的提交
             if not commit['files']:
+                no_files_commits.append(commit)
+                print(f"    📁 跳过无文件修改: {commit['message'][:50]}")
                 continue
             
             # 跳过只修改了非代码文件的提交（可选）
@@ -228,10 +287,20 @@ class GitAnalyzer:
             # 如果有代码文件修改，保留这个提交
             if code_files:
                 # 更新提交记录，只保留代码文件
+                original_file_count = len(commit['files'])
                 commit['files'] = code_files
                 meaningful_commits.append(commit)
+                print(f"    ✅ 保留提交: {commit['message'][:50]} (代码文件: {len(code_files)}/{original_file_count})")
+            else:
+                no_code_files_commits.append(commit)
+                print(f"    📄 跳过非代码文件: {commit['message'][:50]} (文件: {', '.join(commit['files'][:3])})")
         
-        print(f"  过滤合并提交后: {len(meaningful_commits)} / {len(commits)}")
+        print(f"  📊 过滤统计:")
+        print(f"    - 合并提交: {len(merge_commits)} 个")
+        print(f"    - 无文件修改: {len(no_files_commits)} 个")
+        print(f"    - 仅非代码文件: {len(no_code_files_commits)} 个")
+        print(f"    - 保留的有效提交: {len(meaningful_commits)} 个")
+        print(f"  ✅ 过滤结果: {len(meaningful_commits)} / {len(commits)} 个提交保留")
         return meaningful_commits
     
     def _is_code_file(self, file_path: str) -> bool:
@@ -289,16 +358,13 @@ class GitAnalyzer:
             if '.git' in dirs:
                 project_name = os.path.basename(root)
                 
-                # 获取远程URL（如果有的话）
-                remote_url = self._get_remote_url(root)
-                
                 # 获取当前分支
                 current_branch = self._get_current_branch(root)
                 
                 project = {
                     'name': project_name,
-                    'url': remote_url or root,
-                    'platform': self._detect_platform(remote_url) if remote_url else 'local',
+                    'url': root,
+                    'platform': 'local',
                     'local_path': root,
                     'branch': current_branch or 'main'
                 }
@@ -311,42 +377,13 @@ class GitAnalyzer:
         
         return projects
     
-    def _get_remote_url(self, repo_path: str) -> Optional[str]:
-        """获取Git仓库的远程URL"""
-        try:
-            result = subprocess.run(['git', 'remote', 'get-url', 'origin'], 
-                                  cwd=repo_path, capture_output=True, text=True)
-            if result.returncode == 0:
-                return result.stdout.strip()
-        except:
-            pass
-        return None
     
     def _get_current_branch(self, repo_path: str) -> Optional[str]:
         """获取当前分支名"""
-        try:
-            result = subprocess.run(['git', 'branch', '--show-current'], 
-                                  cwd=repo_path, capture_output=True, text=True)
-            if result.returncode == 0:
-                return result.stdout.strip()
-        except:
-            pass
+        result = run_git_command(['git', 'branch', '--show-current'], repo_path, "获取当前分支")
+        if result and result.returncode == 0:
+            return result.stdout.strip()
         return None
-    
-    def _detect_platform(self, url: str) -> str:
-        """检测Git平台"""
-        if not url:
-            return 'local'
-        
-        url_lower = url.lower()
-        if 'github.com' in url_lower:
-            return 'github'
-        elif 'gitlab.com' in url_lower:
-            return 'gitlab'
-        elif 'gitee.com' in url_lower:
-            return 'gitee'
-        else:
-            return 'other'
     
     def _parse_git_log(self, git_log_output: str) -> List[Dict[str, Any]]:
         """解析git log输出"""
